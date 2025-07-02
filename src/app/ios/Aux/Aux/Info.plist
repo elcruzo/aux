@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+   Info.plist
+   Aux
+
+   Created by Ayomide Adekoya on 7/1/25.
+   Copyright (c) 2025 Ayomide Adekoya. All rights reserved.
+-->
+<plist version="1.0">
+<dict>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.aux.app</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>aux</string>
+            </array>
+        </dict>
+    </array>
+    <key>NSAppleMusicUsageDescription</key>
+    <string>Aux needs access to Apple Music to convert your playlists</string>
+</dict>
+</plist>

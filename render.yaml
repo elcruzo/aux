@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: aux-web
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_APP_URL
+        fromService:
+          type: web
+          name: aux-web
+          property: url
+      - key: NEXTAUTH_URL
+        fromService:
+          type: web
+          name: aux-web
+          property: url
+      - key: SPOTIFY_CLIENT_ID
+        sync: false # Set in Render dashboard
+      - key: SPOTIFY_CLIENT_SECRET
+        sync: false # Set in Render dashboard
+      - key: SPOTIFY_REDIRECT_URI
+        fromService:
+          type: web
+          name: aux-web
+          property: url
+          format: ${url}/api/auth/spotify/callback
+      - key: APPLE_TEAM_ID
+        sync: false # Set in Render dashboard
+      - key: APPLE_KEY_ID
+        sync: false # Set in Render dashboard
+      - key: APPLE_PRIVATE_KEY
+        sync: false # Set in Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: NEXTAUTH_SECRET
+        generateValue: true

@@ -1,0 +1,9 @@
+// Configuration settings
+
+// Development
+API_BASE_URL_DEBUG = http:/$()/127.0.0.1:3000/api
+WEB_BASE_URL_DEBUG = http:/$()/127.0.0.1:3000
+
+// Production - Update these with your actual deployed URLs
+API_BASE_URL_RELEASE = https:/$()/aux-web.onrender.com/api
+WEB_BASE_URL_RELEASE = https:/$()/aux-web.onrender.com

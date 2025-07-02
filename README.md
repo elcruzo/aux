@@ -130,3 +130,27 @@ npm run build
 ## Support
 
 For issues or questions, please check the troubleshooting guide above or create an issue in the repository.
+
+
+<!-- 
+  1. Team ID: Sign in to
+  developer.apple.com → Account →
+  Find it under "Membership Details"
+  2. Create a Media ID:
+    - Go to Certificates,
+  Identifiers & Profiles
+    - Create new Media ID with
+  MusicKit enabled
+  3. Create a MusicKit Key:
+    - Go to Keys section
+    - Create new key with MusicKit
+  enabled
+    - Download the .p8 file (you can
+   only download it once!)
+    - Note the Key ID
+  4. Update .env.local:
+    - Add your Team ID
+    - Add your Key ID
+    - Open the .p8 file and copy the
+   ENTIRE contents into
+  APPLE_PRIVATE_KEY -->
