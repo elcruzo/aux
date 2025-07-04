@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# local env files (never commit these!)
+.env.local
+.env.production
+.env.development
+
+# example env files (these SHOULD be committed)
+# .env.example
 
 # vercel
 .vercel
@@ -39,3 +44,38 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#
+.swiftpm
+
+# secrets
+*.p8
+*RENDER_ENV_VARS.txt
+
+# iOS configuration (contains API keys)
+Configuration.xcconfig
+!Config.xcconfig.example
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+# Don't ignore the project workspace
+!*.xcodeproj/project.xcworkspace/
+*.playground
+
+# Xcode project files that SHOULD be committed:
+# *.xcodeproj/project.pbxproj
+# *.xcworkspace/contents.xcworkspacedata
+# *.xcworkspace/xcshareddata/

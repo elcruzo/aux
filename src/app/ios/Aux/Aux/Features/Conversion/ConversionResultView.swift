@@ -16,7 +16,7 @@ struct ConversionResultView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 64))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color("SuccessColor"))
                         .symbolEffect(.bounce)
                     
                     Text("Conversion Complete!")
@@ -40,14 +40,14 @@ struct ConversionResultView: View {
                     StatRow(
                         title: "Successful Matches",
                         value: "\(result.successfulMatches)",
-                        color: .green
+                        color: Color("SuccessColor")
                     )
                     
                     if result.failedMatches > 0 {
                         StatRow(
                             title: "Failed Matches",
                             value: "\(result.failedMatches)",
-                            color: .red
+                            color: Color("ErrorColor")
                         )
                     }
                     
@@ -89,8 +89,8 @@ struct ConversionResultView: View {
                         Label("Convert Another Playlist", systemImage: "arrow.2.circlepath")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.green)
-                            .foregroundStyle(.white)
+                            .background(Color("SuccessColor"))
+                            .foregroundStyle(Color("BackgroundColor"))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
@@ -110,11 +110,11 @@ struct ConversionResultView: View {
     
     private var successRateColor: Color {
         if successRate >= 0.9 {
-            return .green
+            return Color("SuccessColor")
         } else if successRate >= 0.7 {
-            return .yellow
+            return Color("WarningColor")
         } else {
-            return .orange
+            return Color("MediumWarningColor")
         }
     }
 }
@@ -191,10 +191,10 @@ struct MatchBreakdownView: View {
     
     private func confidenceColor(_ confidence: TrackMatch.Confidence) -> Color {
         switch confidence {
-        case .high: return .green
-        case .medium: return .yellow
-        case .low: return .orange
-        case .none: return .red
+        case .high: return Color("SuccessColor")
+        case .medium: return Color("WarningColor")
+        case .low: return Color("MediumWarningColor")
+        case .none: return Color("ErrorColor")
         }
     }
 }

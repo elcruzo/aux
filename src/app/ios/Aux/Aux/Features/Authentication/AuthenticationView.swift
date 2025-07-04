@@ -12,9 +12,7 @@ struct AuthenticationView: View {
     var body: some View {
         VStack(spacing: 24) {
             // Platform icon
-            Image(systemName: platform == .spotify ? "music.note" : "applelogo")
-                .font(.system(size: 60))
-                .foregroundStyle(platformColor)
+            PlatformIcon(platform: platform, size: 80)
                 .padding(.top, 40)
             
             VStack(spacing: 8) {
@@ -40,7 +38,7 @@ struct AuthenticationView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(platformColor)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color("BackgroundColor"))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
@@ -48,7 +46,7 @@ struct AuthenticationView: View {
                     if let error = viewModel.error {
                         Text(error.localizedDescription)
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color("ErrorColor"))
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
@@ -65,7 +63,7 @@ struct AuthenticationView: View {
     }
     
     private var platformColor: Color {
-        platform == .spotify ? .green : .black
+        platform == .spotify ? Color("SpotifyGreen") : .primary
     }
     
     private func authenticate() {

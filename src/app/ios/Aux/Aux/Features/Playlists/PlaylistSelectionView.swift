@@ -33,7 +33,7 @@ struct PlaylistSelectionView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color(.systemGray6))
+            .background(Color(.tertiarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .padding()
             
@@ -42,7 +42,7 @@ struct PlaylistSelectionView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.circle")
                         .font(.system(size: 48))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color("ErrorColor"))
                     
                     Text("Failed to load playlists")
                         .font(.system(size: 18, weight: .medium))
@@ -96,7 +96,7 @@ struct PlaylistSelectionView: View {
         }
         .navigationTitle("Select Playlist")
         .navigationBarTitleDisplayMode(.large)
-        .background(Color(.systemBackground))
+        .background(Color("BackgroundColor"))
         .task {
             await viewModel.loadPlaylists()
         }
@@ -118,7 +118,7 @@ struct PlaylistRow: View {
                             .aspectRatio(contentMode: .fill)
                     } placeholder: {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(.systemGray5))
+                            .fill(Color(.tertiarySystemBackground))
                             .overlay(
                                 ProgressView()
                                     .scaleEffect(0.5)

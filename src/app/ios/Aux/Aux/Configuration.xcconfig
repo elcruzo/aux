@@ -1,9 +1,30 @@
 // Configuration settings
 
-// Development
-API_BASE_URL_DEBUG = http:/$()/127.0.0.1:3000/api
-WEB_BASE_URL_DEBUG = http:/$()/127.0.0.1:3000
+// App Info
+PRODUCT_BUNDLE_IDENTIFIER = com.aux.app
+MARKETING_VERSION = 1.0.0
+CURRENT_PROJECT_VERSION = 1
+DEVELOPMENT_TEAM = ZZ2J234JWU
 
-// Production - Update these with your actual deployed URLs
-API_BASE_URL_RELEASE = https:/$()/aux-web.onrender.com/api
-WEB_BASE_URL_RELEASE = https:/$()/aux-web.onrender.com
+// Development URLs (using production for now)
+API_BASE_URL_DEBUG = https:/$()/aux-50dr.onrender.com/api
+WEB_BASE_URL_DEBUG = https:/$()/aux-50dr.onrender.com
+
+// Production URLs
+API_BASE_URL_RELEASE = https:/$()/aux-50dr.onrender.com/api
+WEB_BASE_URL_RELEASE = https:/$()/aux-50dr.onrender.com
+
+// Code Signing (for development)
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Development
+
+// Deployment Target
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
+
+// Swift Settings
+SWIFT_VERSION = 5.0
+
+// Other Settings
+ENABLE_BITCODE = NO
+SUPPORTS_MACCATALYST = NO
+SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES

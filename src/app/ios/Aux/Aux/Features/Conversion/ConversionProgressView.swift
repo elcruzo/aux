@@ -59,7 +59,7 @@ struct ConversionProgressView: View {
                     Button(action: { viewModel.coordinator.popToRoot() }) {
                         Text("Cancel")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color("ErrorColor"))
                     }
                 }
                 .padding(.bottom, 32)
@@ -67,7 +67,7 @@ struct ConversionProgressView: View {
                 Button(action: { viewModel.coordinator.popToRoot() }) {
                     Text("Cancel")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color("ErrorColor"))
                 }
                 .padding(.bottom, 32)
             }
@@ -86,7 +86,7 @@ struct ConversionProgressView: View {
             // Icon with progress
             ZStack {
                 Circle()
-                    .stroke(Color(.systemGray5), lineWidth: 3)
+                    .stroke(Color(.tertiarySystemBackground), lineWidth: 3)
                     .frame(width: 80, height: 80)
                 
                 if progress.total > 0 {
@@ -125,7 +125,7 @@ struct ConversionProgressView: View {
         VStack(spacing: 24) {
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 64))
-                .foregroundStyle(.red)
+                .foregroundStyle(Color("ErrorColor"))
             
             VStack(spacing: 8) {
                 Text("Conversion Failed")
@@ -159,7 +159,7 @@ struct ConversionProgressView: View {
     private func progressColor(for stage: ConversionProgress.Stage) -> Color {
         switch stage {
         case .complete:
-            return .green
+            return Color("SuccessColor")
         default:
             return .primary
         }

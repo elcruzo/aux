@@ -1,0 +1,10 @@
+// Copy this to Configuration.xcconfig and update with your values
+// DO NOT commit Configuration.xcconfig to git!
+
+// Development
+API_BASE_URL_DEBUG = http:/$()/127.0.0.1:3000/api
+WEB_BASE_URL_DEBUG = http:/$()/127.0.0.1:3000
+
+// Production
+API_BASE_URL_RELEASE = https:/$()/aux-50dr.onrender.com/api
+WEB_BASE_URL_RELEASE = https:/$()/aux-50dr.onrender.com

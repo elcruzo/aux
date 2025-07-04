@@ -1,21 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import Script from "next/script";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Aux - Universal Playlist Converter",
-  description: "Convert playlists between Spotify and Apple Music seamlessly",
+  description: "Convert playlists between Spotify and Apple Music seamlessly. Never miss out on great music again.",
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
+  openGraph: {
+    title: 'Aux - Universal Playlist Converter',
+    description: 'Convert playlists between Spotify and Apple Music seamlessly',
+    url: 'https://aux-50dr.onrender.com',
+    siteName: 'Aux',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
@@ -25,17 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <Script
-          src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"
-          strategy="afterInteractive"
-        />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900`}
-      >
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

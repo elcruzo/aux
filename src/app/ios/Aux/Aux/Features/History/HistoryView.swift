@@ -53,7 +53,7 @@ struct HistoryView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
+        .background(Color("BackgroundColor"))
     }
     
     private var historyList: some View {
@@ -95,7 +95,7 @@ struct HistoryRow: View {
                 // Success rate indicator
                 ZStack {
                     Circle()
-                        .stroke(Color(.systemGray5), lineWidth: 2)
+                        .stroke(Color(.tertiarySystemBackground), lineWidth: 2)
                         .frame(width: 44, height: 44)
                     
                     Circle()
@@ -112,17 +112,13 @@ struct HistoryRow: View {
             
             // Direction
             HStack(spacing: 8) {
-                Image(systemName: record.sourcePlatform == .spotify ? "music.note" : "applelogo")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                PlatformIcon(platform: record.sourcePlatform, size: 20)
                 
                 Image(systemName: "arrow.right")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                 
-                Image(systemName: record.targetPlatform == .spotify ? "music.note" : "applelogo")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                PlatformIcon(platform: record.targetPlatform, size: 20)
                 
                 Spacer()
                 
@@ -130,12 +126,12 @@ struct HistoryRow: View {
                 HStack(spacing: 12) {
                     Label("\(record.successfulMatches)", systemImage: "checkmark.circle")
                         .font(.system(size: 12))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color("SuccessColor"))
                     
                     if record.failedMatches > 0 {
                         Label("\(record.failedMatches)", systemImage: "xmark.circle")
                             .font(.system(size: 12))
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color("ErrorColor"))
                     }
                 }
             }
@@ -148,7 +144,7 @@ struct HistoryRow: View {
                 }) {
                     Text("Open in \(record.targetPlatform.displayName)")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Color("LinkBlue"))
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -159,11 +155,11 @@ struct HistoryRow: View {
     private func successColor(for rate: Double) -> Color {
         switch rate {
         case 0.8...1.0:
-            return .green
+            return Color("SuccessColor")
         case 0.5..<0.8:
-            return .orange
+            return Color("MediumWarningColor")
         default:
-            return .red
+            return Color("ErrorColor")
         }
     }
 }

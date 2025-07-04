@@ -46,6 +46,10 @@ final class ConversionProgressViewModel: ObservableObject {
                 direction: direction
             )
             self.result = result
+            
+            // Save to history
+            await ConversionHistoryService.shared.saveConversion(playlist: playlist, result: result, direction: direction)
+            
             coordinator.showConversionResult(result)
         } catch {
             self.error = error

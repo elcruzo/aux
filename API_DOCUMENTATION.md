@@ -6,42 +6,127 @@ The Aux API provides endpoints for converting playlists between Spotify and Appl
 
 ## Base URL
 
+- Production: `https://aux-50dr.onrender.com/api`
 - Development: `http://localhost:3000/api`
-- Production: `https://your-domain.com/api`
 
 ## Interactive Documentation
 
-Access the interactive API documentation at:
-- Local: http://localhost:3000/api-docs
-- Static HTML: http://localhost:3000/api-docs.html
+Access the interactive Swagger UI documentation at:
+- **Production**: https://aux-50dr.onrender.com/api-docs
+- **Development**: http://localhost:3000/api-docs
 
 ## Authentication
 
-The API uses cookie-based session authentication. Users must authenticate with both Spotify and Apple Music before converting playlists.
+The API uses cookie-based session authentication. iOS app users authenticate via OAuth flows.
 
-### Auth Flow
+### Check Authentication Status
 
-1. **Check Status**: `GET /api/auth/status`
-2. **Spotify Auth**: `GET /api/auth/spotify` → Returns OAuth URL
-3. **Apple Auth**: `POST /api/auth/apple/callback` with user token
+**GET** `/api/auth/status`
 
-## Key Endpoints
+Returns the current authentication status for both platforms.
 
-### Playlists
+Response:
+```json
+{
+  "spotify": true,
+  "apple": false
+}
+```
 
-- `GET /api/spotify/playlists` - Get user's Spotify playlists
-- `GET /api/apple/playlists` - Get user's Apple Music playlists
-- `GET /api/{platform}/playlists/{id}/tracks` - Get playlist tracks
+### Spotify Authentication
 
-### Conversion
+**GET** `/api/auth/spotify`
 
-- `POST /api/convert` - Convert a playlist
+Initiates Spotify OAuth flow. Returns redirect URL for iOS app.
+
+Response:
+```json
+{
+  "url": "https://accounts.spotify.com/authorize?client_id=..."
+}
+```
+
+**GET** `/api/auth/spotify/callback?code={code}&state={state}`
+
+Handles Spotify OAuth callback. Sets session cookie.
+
+### Apple Music Authentication
+
+**POST** `/api/auth/apple/callback`
+
+Saves Apple Music user token from iOS app.
 
 Request body:
 ```json
 {
-  "playlistId": "spotify:playlist:123",
-  "playlistName": "My Playlist",
+  "userToken": "eyJhbGc..."
+}
+```
+
+## Playlist Operations
+
+### Get User's Playlists
+
+**GET** `/api/spotify/playlists`
+**GET** `/api/apple/playlists`
+
+Returns user's playlists for the specified platform.
+
+Response:
+```json
+{
+  "playlists": [
+    {
+      "id": "37i9dQZF1DX5Ejj0EkURtP",
+      "name": "Today's Top Hits",
+      "description": "The hottest tracks in the world",
+      "imageUrl": "https://i.scdn.co/image/...",
+      "trackCount": 50,
+      "owner": "Spotify",
+      "isPublic": true
+    }
+  ]
+}
+```
+
+### Get Playlist Tracks
+
+**GET** `/api/spotify/playlists/{playlistId}/tracks`
+**GET** `/api/apple/playlists/{playlistId}/tracks`
+
+Returns all tracks in a playlist.
+
+Response:
+```json
+{
+  "tracks": [
+    {
+      "id": "track123",
+      "name": "Flowers",
+      "artist": "Miley Cyrus",
+      "album": "Endless Summer Vacation",
+      "duration": 200000,
+      "isrc": "USSM12209515",
+      "popularity": 95,
+      "previewUrl": "https://p.scdn.co/..."
+    }
+  ]
+}
+```
+
+## Playlist Conversion
+
+### Convert Playlist
+
+**POST** `/api/convert`
+
+Converts a playlist from one platform to another.
+
+Request body:
+```json
+{
+  "playlistId": "37i9dQZF1DX5Ejj0EkURtP",
+  "playlistName": "Today's Top Hits",
   "direction": "spotify-to-apple"
 }
 ```
@@ -49,77 +134,143 @@ Request body:
 Response:
 ```json
 {
-  "playlistId": "spotify:playlist:123",
-  "playlistName": "My Playlist",
+  "playlistId": "37i9dQZF1DX5Ejj0EkURtP",
+  "playlistName": "Today's Top Hits",
   "totalTracks": 50,
   "successfulMatches": 48,
   "failedMatches": 2,
-  "targetPlaylistId": "apple:playlist:456",
-  "targetPlaylistUrl": "https://music.apple.com/...",
-  "matches": [...]
+  "targetPlaylistId": "pl.f4d106fed2bd41149aaacabb233eb5eb",
+  "targetPlaylistUrl": "https://music.apple.com/playlist/pl.f4d106fed2bd41149aaacabb233eb5eb",
+  "matches": [
+    {
+      "status": "matched",
+      "confidence": 1.0,
+      "sourceTrack": {
+        "name": "Flowers",
+        "artist": "Miley Cyrus"
+      },
+      "targetTrack": {
+        "id": "1622855135",
+        "name": "Flowers",
+        "artist": "Miley Cyrus"
+      }
+    },
+    {
+      "status": "not_found",
+      "sourceTrack": {
+        "name": "Some Rare Track",
+        "artist": "Unknown Artist"
+      },
+      "reason": "No match found"
+    }
+  ]
 }
 ```
+
+### Direction Values
+- `spotify-to-apple` - Convert from Spotify to Apple Music
+- `apple-to-spotify` - Convert from Apple Music to Spotify
 
 ## Track Matching Algorithm
 
-The API uses a multi-step matching process:
+The API uses a sophisticated multi-step matching process:
 
-1. **ISRC Match** - International Standard Recording Code (most accurate)
-2. **Metadata Search** - Artist + Track name + Album
-3. **Fuzzy Search** - Normalized string matching
+1. **ISRC Match** (100% confidence)
+   - International Standard Recording Code
+   - Most accurate method
+   - Unique identifier for recordings
 
-## Error Handling
+2. **Exact Metadata Match** (95% confidence)
+   - Artist name + Track name + Album name
+   - Case-insensitive comparison
+   - Handles special characters
 
-All errors follow this format:
+3. **Fuzzy Search** (80-90% confidence)
+   - Normalized string matching
+   - Handles slight variations
+   - Removes featuring artists for comparison
+
+## Error Responses
+
+All errors return consistent JSON format:
+
 ```json
 {
-  "error": "Error description"
+  "error": "Detailed error message"
 }
 ```
 
-Common status codes:
-- `401` - Authentication required
-- `400` - Bad request
-- `429` - Rate limited
-- `500` - Server error
+### Status Codes
+
+- `200` - Success
+- `400` - Bad Request (invalid parameters)
+- `401` - Unauthorized (authentication required)
+- `404` - Not Found (playlist or track not found)
+- `429` - Rate Limited
+- `500` - Internal Server Error
+
+### Common Errors
+
+```json
+// Not authenticated
+{
+  "error": "Please authenticate with Spotify first"
+}
+
+// Invalid playlist
+{
+  "error": "Playlist not found or access denied"
+}
+
+// Rate limited
+{
+  "error": "Rate limit exceeded. Please try again later"
+}
+```
 
 ## Rate Limits
 
-- Spotify: 180 requests per minute
-- Apple Music: Based on user's token limits
+- **Spotify API**: 180 requests per minute
+- **Apple Music API**: Based on user token (typically 900/hour)
+- **Conversion endpoint**: 10 conversions per minute per user
 
-## Development
+## iOS App Integration
 
-### Running Locally
-
-```bash
-cd aux-app
-npm install
-npm run dev
-```
-
-### Testing the API
-
-Use the Swagger UI at `/api-docs` or test with curl:
-
-```bash
-# Check auth status
-curl http://localhost:3000/api/auth/status
-
-# Get Spotify playlists (with session cookie)
-curl http://localhost:3000/api/spotify/playlists \
-  -H "Cookie: session=..."
-```
-
-## SDK Integration
-
-The iOS app uses the APIClient to interact with this API:
+The iOS app uses the `APIClient` class to interact with these endpoints:
 
 ```swift
+// Check authentication
+let status = try await apiClient.getAuthStatus()
+
+// Get playlists
 let playlists = try await apiClient.getSpotifyPlaylists()
+
+// Convert playlist
 let result = try await apiClient.convertPlaylist(
     playlistId: playlist.id,
     playlistName: playlist.name,
     direction: .spotifyToApple
 )
 ```
+
+## Session Management
+
+- Sessions expire after 7 days of inactivity
+- Spotify tokens refresh automatically
+- Apple Music tokens are valid for 6 months
+- iOS app handles re-authentication when needed
+
+## Security
+
+- All endpoints use HTTPS in production
+- Session cookies are httpOnly and secure
+- OAuth state parameter prevents CSRF attacks
+- No user data is stored permanently
+
+## Support
+
+For API issues or questions:
+- Email: ayomideadekoya266@gmail.com
+- GitHub: https://github.com/elcruzo/aux
+- API Status: https://aux-50dr.onrender.com/api/auth/status
+- Interactive Docs: https://aux-50dr.onrender.com/api-docs

@@ -6,17 +6,18 @@
     "version": "1.0.0",
     "contact": {
       "name": "Aux Support",
+      "email": "ayomideadekoya266@gmail.com",
       "url": "https://github.com/elcruzo/aux"
     }
   },
   "servers": [
     {
-      "url": "http://localhost:3000/api",
-      "description": "Local development server"
+      "url": "https://aux-50dr.onrender.com/api",
+      "description": "Production server"
     },
     {
-      "url": "https://aux-api.vercel.app/api",
-      "description": "Production server"
+      "url": "http://localhost:3000/api",
+      "description": "Local development server"
     }
   ],
   "tags": [

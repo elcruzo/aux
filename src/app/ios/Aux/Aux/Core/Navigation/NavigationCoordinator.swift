@@ -8,6 +8,7 @@ final class NavigationCoordinator: ObservableObject {
     @Published var selectedTab: Tab = .converter
     @Published var showingAuth = false
     @Published var authPlatform: Track.Platform?
+    @Published var sharedPlaylistUrl: String?
     
     enum Tab: String, CaseIterable {
         case converter
@@ -32,15 +33,15 @@ final class NavigationCoordinator: ObservableObject {
     }
     
     enum Route: Hashable {
-        case playlistSelection(direction: ConversionDirection)
+        case playlistSelection(direction: ConversionDirection, urlToConvert: String? = nil)
         case conversionProgress(playlist: Playlist, direction: ConversionDirection)
         case conversionResult(result: ConversionResult)
         case playlistDetail(playlist: Playlist)
         
         static func == (lhs: Route, rhs: Route) -> Bool {
             switch (lhs, rhs) {
-            case (.playlistSelection(let lDir), .playlistSelection(let rDir)):
-                return lDir == rDir
+            case (.playlistSelection(let lDir, let lUrl), .playlistSelection(let rDir, let rUrl)):
+                return lDir == rDir && lUrl == rUrl
             case (.conversionProgress(let lPlaylist, let lDir), .conversionProgress(let rPlaylist, let rDir)):
                 return lPlaylist == rPlaylist && lDir == rDir
             case (.conversionResult(let lResult), .conversionResult(let rResult)):
@@ -54,9 +55,10 @@ final class NavigationCoordinator: ObservableObject {
         
         func hash(into hasher: inout Hasher) {
             switch self {
-            case .playlistSelection(let direction):
+            case .playlistSelection(let direction, let url):
                 hasher.combine("playlistSelection")
                 hasher.combine(direction)
+                hasher.combine(url)
             case .conversionProgress(let playlist, let direction):
                 hasher.combine("conversionProgress")
                 hasher.combine(playlist)
@@ -72,8 +74,8 @@ final class NavigationCoordinator: ObservableObject {
     }
     
     // Navigation actions
-    func showPlaylistSelection(direction: ConversionDirection) {
-        path.append(Route.playlistSelection(direction: direction))
+    func showPlaylistSelection(direction: ConversionDirection, urlToConvert: String? = nil) {
+        path.append(Route.playlistSelection(direction: direction, urlToConvert: urlToConvert))
     }
     
     func showConversionProgress(playlist: Playlist, direction: ConversionDirection) {
@@ -103,5 +105,10 @@ final class NavigationCoordinator: ObservableObject {
         if !path.isEmpty {
             path.removeLast()
         }
+    }
+    
+    func navigateToConverter() {
+        selectedTab = .converter
+        path = NavigationPath()
     }
 }

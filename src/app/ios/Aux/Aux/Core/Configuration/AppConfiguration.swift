@@ -4,29 +4,24 @@ import Foundation
 enum AppConfiguration {
     /// API base URL
     static var apiBaseURL: String {
-        // Check for environment variable first, then fall back to defaults
-        if let envURL = ProcessInfo.processInfo.environment["API_BASE_URL"] {
-            return envURL
+        // Read from Info.plist (which gets values from xcconfig)
+        if let url = Bundle.main.infoDictionary?["API_BASE_URL"] as? String {
+            return url
         }
         
-        #if DEBUG
-        return "http://127.0.0.1:3000/api"
-        #else
-        return "https://aux-web.onrender.com/api"  // Update when you have production URL
-        #endif
+        // Fallback to production
+        return "https://aux-50dr.onrender.com/api"
     }
     
     /// Web base URL (for docs, OAuth callbacks, etc)
     static var webBaseURL: String {
-        if let envURL = ProcessInfo.processInfo.environment["WEB_BASE_URL"] {
-            return envURL
+        // Read from Info.plist (which gets values from xcconfig)
+        if let url = Bundle.main.infoDictionary?["WEB_BASE_URL"] as? String {
+            return url
         }
         
-        #if DEBUG
-        return "http://127.0.0.1:3000"
-        #else
-        return "https://aux-web.onrender.com"  // Update when you have production URL
-        #endif
+        // Fallback to production
+        return "https://aux-50dr.onrender.com"
     }
     
     /// API documentation URL
@@ -56,6 +51,15 @@ enum AppConfiguration {
         return true
         #else
         return false
+        #endif
+    }
+    
+    /// Current environment
+    static var environment: String {
+        #if DEBUG
+        return "DEBUG"
+        #else
+        return "RELEASE"
         #endif
     }
 }

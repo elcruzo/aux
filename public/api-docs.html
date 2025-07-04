@@ -11,13 +11,35 @@
         }
         .swagger-ui .topbar {
             background-color: #1a1a1a;
+            padding: 0;
         }
         .swagger-ui .topbar .download-url-wrapper {
             display: none;
         }
+        .aux-header {
+            background-color: #1a1a1a;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .aux-logo {
+            height: 40px;
+            width: auto;
+        }
+        .aux-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
+    <div class="aux-header">
+        <img src="/logo-bw.png" alt="Aux Logo" class="aux-logo">
+        <h1 class="aux-title">API Documentation</h1>
+    </div>
     <div id="swagger-ui"></div>
     <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
     <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>

@@ -6,13 +6,21 @@ final class ConverterViewModel: ObservableObject {
     @Published var direction = ConversionDirection.spotifyToApple
     @Published private(set) var sourceAuthenticated = false
     @Published private(set) var targetAuthenticated = false
+    @Published var urlInput = ""
     
     private let authService: AuthenticationService
     private let coordinator: NavigationCoordinator
     private var cancellables = Set<AnyCancellable>()
     
-    var canConvert: Bool {
-        sourceAuthenticated && targetAuthenticated
+    var canSelectPlaylist: Bool {
+        sourceAuthenticated
+    }
+    
+    var isValidURL: Bool {
+        guard !urlInput.isEmpty else { return false }
+        return urlInput.contains("spotify.com") || 
+               urlInput.contains("music.apple.com") || 
+               urlInput.starts(with: "spotify:")
     }
     
     var sourcePlatform: Track.Platform {
@@ -42,6 +50,15 @@ final class ConverterViewModel: ObservableObject {
                 self?.updateAuthStatus(spotify: spotify, apple: apple, direction: direction)
             }
             .store(in: &cancellables)
+        
+        // Observe shared playlist URL
+        coordinator.$sharedPlaylistUrl
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] url in
+                self?.handleSharedUrl(url)
+            }
+            .store(in: &cancellables)
     }
     
     private func updateAuthStatus(spotify: Bool, apple: Bool, direction: ConversionDirection) {
@@ -69,5 +86,45 @@ final class ConverterViewModel: ObservableObject {
     
     func checkAuthStatus() async {
         await authService.checkAuthStatus()
+    }
+    
+    func convertFromURL() {
+        guard isValidURL else { return }
+        handleSharedUrl(urlInput)
+        urlInput = "" // Clear after processing
+    }
+    
+    private func handleSharedUrl(_ urlString: String) {
+        // Clear the shared URL so we don't process it multiple times
+        coordinator.sharedPlaylistUrl = nil
+        
+        // Determine platform from URL
+        let isSpotifyUrl = urlString.contains("spotify.com") || urlString.starts(with: "spotify:")
+        let isAppleUrl = urlString.contains("music.apple.com")
+        
+        guard isSpotifyUrl || isAppleUrl else { return }
+        
+        // Determine the target platform based on URL
+        let targetPlatform: Track.Platform
+        if isSpotifyUrl {
+            targetPlatform = .apple
+            direction = .spotifyToApple
+        } else if isAppleUrl {
+            targetPlatform = .spotify
+            direction = .appleToSpotify
+        } else {
+            return
+        }
+        
+        // Check if user has the target platform authenticated
+        let targetAuthenticated = (targetPlatform == .spotify) ? authService.isSpotifyAuthenticated : authService.isAppleAuthenticated
+        
+        if targetAuthenticated {
+            // User has the platform they need, proceed to conversion
+            coordinator.showPlaylistSelection(direction: direction, urlToConvert: urlString)
+        } else {
+            // User needs to authenticate the target platform
+            coordinator.showAuthentication(for: targetPlatform)
+        }
     }
 }

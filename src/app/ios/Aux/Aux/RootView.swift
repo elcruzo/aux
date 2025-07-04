@@ -53,7 +53,7 @@ struct RootView: View {
     @ViewBuilder
     private func destinationView(for route: NavigationCoordinator.Route) -> some View {
         switch route {
-        case .playlistSelection(let direction):
+        case .playlistSelection(let direction, _):
             PlaylistSelectionView(direction: direction, coordinator: coordinator)
             
         case .conversionProgress(let playlist, let direction):
@@ -72,35 +72,6 @@ struct RootView: View {
     }
 }
 
-
-struct SettingsView: View {
-    var body: some View {
-        List {
-            Section("About") {
-                HStack {
-                    Text("Version")
-                    Spacer()
-                    Text("1.0.0")
-                        .foregroundStyle(.secondary)
-                }
-                
-                Link("GitHub", destination: URL(string: "https://github.com/elcruzo/aux")!)
-            }
-            
-            Section("Developer") {
-                Link("API Documentation", destination: URL(string: AppConfiguration.apiDocsURL)!)
-                Link("API Playground", destination: URL(string: AppConfiguration.apiDocsURL)!)
-                Link("GitHub Issues", destination: URL(string: "https://github.com/elcruzo/aux/issues")!)
-            }
-            
-            Section("Resources") {
-                Link("Spotify Web API", destination: URL(string: "https://developer.spotify.com/documentation/web-api")!)
-                Link("Apple Music API", destination: URL(string: "https://developer.apple.com/documentation/applemusicapi")!)
-            }
-        }
-        .navigationTitle("Settings")
-    }
-}
 
 struct PlaylistDetailView: View {
     let playlist: Playlist
