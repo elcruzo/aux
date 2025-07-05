@@ -65,9 +65,9 @@
         <key>NSAllowsArbitraryLoads</key>
         <true/>
     </dict>
-    <key>API_BASE_URL</key>
-    <string>$(API_BASE_URL_$(CONFIGURATION))</string>
-    <key>WEB_BASE_URL</key>
-    <string>$(WEB_BASE_URL_$(CONFIGURATION))</string>
+    <key>API_HOST</key>
+    <string>$(API_HOST_DEBUG)</string>
+    <key>WEB_HOST</key>
+    <string>$(WEB_HOST_DEBUG)</string>
 </dict>
 </plist>

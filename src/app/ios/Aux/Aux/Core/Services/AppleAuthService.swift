@@ -4,7 +4,13 @@ import MusicKit
 /// Service for handling Apple Music authentication
 @MainActor
 final class AppleAuthService {
+    /// Track if we've performed initial setup
+    private var hasPerformedInitialCheck = false
+    
     func authenticate() async throws -> String {
+        // Mark that we've performed a check when user explicitly authenticates
+        hasPerformedInitialCheck = true
+        
         let status = await MusicAuthorization.request()
         
         guard status == .authorized else {
@@ -17,7 +23,18 @@ final class AppleAuthService {
     }
     
     var isAuthorized: Bool {
-        MusicAuthorization.currentStatus == .authorized
+        // NEVER check MusicAuthorization.currentStatus directly
+        // This can cause privacy crashes if called at wrong time
+        // Only return true if we have a token in keychain
+        return KeychainService.shared.hasAppleAuth()
+    }
+    
+    /// Safely check authorization status after app is ready
+    func checkAuthorizationStatus() async -> Bool {
+        // Only check if we've explicitly authenticated before
+        guard hasPerformedInitialCheck else { return false }
+        
+        return MusicAuthorization.currentStatus == .authorized
     }
     
     enum AuthError: LocalizedError {

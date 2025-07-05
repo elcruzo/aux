@@ -57,9 +57,7 @@ struct AuthenticationView: View {
             Spacer()
         }
         .padding()
-        .task {
-            await viewModel.checkAuthStatus()
-        }
+        // Auth check removed - now handled centrally in AuxApp
     }
     
     private var platformColor: Color {

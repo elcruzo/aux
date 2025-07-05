@@ -10,7 +10,11 @@ actor APIClient: Sendable {
     private let encoder = JSONEncoder()
     
     private init() {
-        self.baseURL = URL(string: AppConfiguration.apiBaseURL)!
+        let urlString = AppConfiguration.apiBaseURL
+        guard !urlString.isEmpty, let url = URL(string: urlString) else {
+            fatalError("Invalid API URL configuration. URL string: '\(urlString)'")
+        }
+        self.baseURL = url
         
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
@@ -51,9 +55,12 @@ actor APIClient: Sendable {
 // MARK: - Request Methods
 extension APIClient {
     func get<T: Decodable>(_ endpoint: String, type: T.Type) async throws -> T {
-        guard let url = URL(string: endpoint, relativeTo: baseURL) else {
-            throw APIError.invalidURL
-        }
+        // Ensure endpoint doesn't start with / for proper URL construction
+        let cleanEndpoint = endpoint.hasPrefix("/") ? String(endpoint.dropFirst()) : endpoint
+        let url = baseURL.appendingPathComponent(cleanEndpoint)
+        
+        // Debug logging
+        print("📡 GET Request: \(url.absoluteString)")
         
         do {
             let (data, response) = try await session.data(from: url)
@@ -89,9 +96,12 @@ extension APIClient {
     }
     
     func post<T: Encodable, R: Decodable>(_ endpoint: String, body: T, responseType: R.Type) async throws -> R {
-        guard let url = URL(string: endpoint, relativeTo: baseURL) else {
-            throw APIError.invalidURL
-        }
+        // Ensure endpoint doesn't start with / for proper URL construction
+        let cleanEndpoint = endpoint.hasPrefix("/") ? String(endpoint.dropFirst()) : endpoint
+        let url = baseURL.appendingPathComponent(cleanEndpoint)
+        
+        // Debug logging
+        print("📡 POST Request: \(url.absoluteString)")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

@@ -53,8 +53,8 @@ struct RootView: View {
     @ViewBuilder
     private func destinationView(for route: NavigationCoordinator.Route) -> some View {
         switch route {
-        case .playlistSelection(let direction, _):
-            PlaylistSelectionView(direction: direction, coordinator: coordinator)
+        case .urlConversion(let url, let direction):
+            URLConversionView(url: url, direction: direction, coordinator: coordinator)
             
         case .conversionProgress(let playlist, let direction):
             ConversionProgressView(

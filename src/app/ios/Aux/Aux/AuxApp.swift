@@ -14,6 +14,15 @@ struct AuxApp: App {
     @State private var showLaunchScreen = true
     @State private var showOnboarding = false
     
+    init() {
+        // Ensure Info.plist keys are properly loaded
+        // This is a workaround for when GENERATE_INFOPLIST_FILE is YES
+        if Bundle.main.object(forInfoDictionaryKey: "NSAppleMusicUsageDescription") == nil {
+            print("⚠️ WARNING: NSAppleMusicUsageDescription not found in Info.plist!")
+            print("⚠️ This will cause crashes when accessing Apple Music")
+        }
+    }
+    
     var body: some Scene {
         WindowGroup {
             ZStack {
@@ -48,6 +57,11 @@ struct AuxApp: App {
                         if !hasCompletedOnboarding {
                             showOnboarding = true
                         }
+                    }
+                    
+                    // Centralized auth check after launch screen
+                    Task {
+                        await ServiceFactory.shared.authService.checkAuthStatus()
                     }
                 }
             }

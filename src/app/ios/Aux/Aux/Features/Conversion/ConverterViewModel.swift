@@ -13,7 +13,7 @@ final class ConverterViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     var canSelectPlaylist: Bool {
-        sourceAuthenticated
+        targetAuthenticated
     }
     
     var isValidURL: Bool {
@@ -80,9 +80,7 @@ final class ConverterViewModel: ObservableObject {
         coordinator.showAuthentication(for: targetPlatform)
     }
     
-    func startConversion() {
-        coordinator.showPlaylistSelection(direction: direction)
-    }
+    // Removed - no longer needed since we're using URL-based conversion only
     
     func checkAuthStatus() async {
         await authService.checkAuthStatus()
@@ -121,7 +119,7 @@ final class ConverterViewModel: ObservableObject {
         
         if targetAuthenticated {
             // User has the platform they need, proceed to conversion
-            coordinator.showPlaylistSelection(direction: direction, urlToConvert: urlString)
+            coordinator.showURLConversion(url: urlString, direction: direction)
         } else {
             // User needs to authenticate the target platform
             coordinator.showAuthentication(for: targetPlatform)

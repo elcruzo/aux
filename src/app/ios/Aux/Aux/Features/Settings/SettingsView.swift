@@ -194,11 +194,29 @@ struct SettingsView: View {
                 } header: {
                     Text("Resources")
                 }
+                
+                // Debug section (only in debug builds)
+                #if DEBUG
+                Section {
+                    Button(action: clearAllData) {
+                        Label("Clear All Data", systemImage: "trash")
+                            .foregroundStyle(.red)
+                    }
+                    
+                    Button(action: resetOnboarding) {
+                        Label("Reset Onboarding", systemImage: "arrow.counterclockwise")
+                            .foregroundStyle(.orange)
+                    }
+                } header: {
+                    Text("Debug")
+                } footer: {
+                    Text("These options are only available in debug builds")
+                        .font(.caption)
+                }
+                #endif
             }
             .navigationTitle("Settings")
-            .task {
-                await authService.checkAuthStatus()
-            }
+            // Auth check removed - now handled centrally in AuxApp
         }
     }
     
@@ -228,6 +246,25 @@ struct SettingsView: View {
     private func logout() {
         authService.logout()
     }
+    
+    #if DEBUG
+    private func clearAllData() {
+        // Clear UserDefaults
+        if let bundleID = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: bundleID)
+        }
+        
+        // Clear Keychain
+        authService.logout()
+        
+        print("🗑️ Cleared all app data")
+    }
+    
+    private func resetOnboarding() {
+        UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+        print("🔄 Reset onboarding")
+    }
+    #endif
 }
 
 #Preview {

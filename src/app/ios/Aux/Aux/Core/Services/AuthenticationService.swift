@@ -10,6 +10,8 @@ final class AuthenticationService: ObservableObject {
     private let apiClient: APIClient
     private let keychain = KeychainService.shared
     private var cancellables = Set<AnyCancellable>()
+    private var isCheckingAuth = false
+    private var lastAuthCheck: Date?
     
     init(apiClient: APIClient) {
         self.apiClient = apiClient
@@ -21,6 +23,9 @@ final class AuthenticationService: ObservableObject {
     /// Check local keychain for stored auth
     private func checkLocalAuthStatus() {
         isSpotifyAuthenticated = keychain.hasSpotifyAuth() && !keychain.isSpotifyTokenExpired()
+        
+        // For Apple, only check keychain - don't access MusicAuthorization here
+        // as it might be too early in the app lifecycle
         isAppleAuthenticated = keychain.hasAppleAuth()
         
         print("🔐 Local auth check:")
@@ -30,6 +35,23 @@ final class AuthenticationService: ObservableObject {
     
     /// Check authentication status for both platforms
     func checkAuthStatus() async {
+        // Prevent duplicate checks within 2 seconds
+        if isCheckingAuth {
+            print("🔐 Skipping duplicate auth check (already in progress)")
+            return
+        }
+        
+        if let lastCheck = lastAuthCheck, Date().timeIntervalSince(lastCheck) < 2.0 {
+            print("🔐 Skipping auth check (checked recently)")
+            return
+        }
+        
+        isCheckingAuth = true
+        defer { 
+            isCheckingAuth = false
+            lastAuthCheck = Date()
+        }
+        
         print("🔐 Checking auth status with server...")
         print("   URL: \(AppConfiguration.apiBaseURL)/auth/status")
         

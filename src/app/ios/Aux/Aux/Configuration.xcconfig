@@ -1,18 +1,18 @@
 // Configuration settings
 
 // App Info
-PRODUCT_BUNDLE_IDENTIFIER = com.aux.app
+PRODUCT_BUNDLE_IDENTIFIER = com.aux.ios
 MARKETING_VERSION = 1.0.0
 CURRENT_PROJECT_VERSION = 1
 DEVELOPMENT_TEAM = ZZ2J234JWU
 
 // Development URLs (using production for now)
-API_BASE_URL_DEBUG = https:/$()/aux-50dr.onrender.com/api
-WEB_BASE_URL_DEBUG = https:/$()/aux-50dr.onrender.com
+API_HOST_DEBUG = aux-50dr.onrender.com
+WEB_HOST_DEBUG = aux-50dr.onrender.com
 
 // Production URLs
-API_BASE_URL_RELEASE = https:/$()/aux-50dr.onrender.com/api
-WEB_BASE_URL_RELEASE = https:/$()/aux-50dr.onrender.com
+API_HOST_RELEASE = aux-50dr.onrender.com
+WEB_HOST_RELEASE = aux-50dr.onrender.com
 
 // Code Signing (for development)
 CODE_SIGN_STYLE = Automatic

@@ -9,198 +9,159 @@ struct ConverterView: View {
     }
     
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(spacing: 32) {
-            // Logo header
-            VStack(spacing: 8) {
-                Image("Logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 60)
-                
-                Text("Playlist Converter")
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.top, 40)
-            
-            // Direction selector
-            DirectionSelector(direction: $viewModel.direction)
-                .padding(.horizontal)
-            
-            // Platform cards
-            VStack(spacing: 16) {
-                PlatformCard(
-                    platform: viewModel.sourcePlatform,
-                    isAuthenticated: viewModel.sourceAuthenticated,
-                    label: "From",
-                    action: viewModel.authenticateSource
-                )
-                
-                PlatformCard(
-                    platform: viewModel.targetPlatform,
-                    isAuthenticated: viewModel.targetAuthenticated,
-                    label: "To",
-                    action: viewModel.authenticateTarget
-                )
-            }
-            .padding(.horizontal)
-            
-            // Browse button - shows when authenticated
-            if viewModel.canSelectPlaylist {
-                Button(action: viewModel.startConversion) {
-                    HStack {
-                        Image(systemName: "music.note.list")
-                            .font(.system(size: 16))
-                        Text("Browse My Playlists")
-                            .font(.system(size: 16, weight: .medium))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 14))
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.accentColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-            
-            // Alternative: Quick Link Convert
-            VStack(spacing: 0) {
-                // Divider with "or"
-                HStack(spacing: 12) {
-                    Rectangle()
-                        .fill(Color(.separator))
-                        .frame(height: 1)
-                        .frame(maxWidth: .infinity)
+        ScrollView {
+            VStack(spacing: 32) {
+                // Logo header
+                VStack(spacing: 8) {
+                    Image("Logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 60)
                     
-                    Text("or")
-                        .font(.system(size: 14, weight: .medium))
+                    Text("Playlist Converter")
+                        .font(.system(size: 16, weight: .regular))
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8)
-                    
-                    Rectangle()
-                        .fill(Color(.separator))
-                        .frame(height: 1)
-                        .frame(maxWidth: .infinity)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 20)
+                .padding(.top, 40)
                 
-                // Quick convert card
+                // Direction selector
+                DirectionSelector(direction: $viewModel.direction)
+                    .padding(.horizontal)
+                
+                // Only show target platform for authentication
                 VStack(spacing: 16) {
-                    HStack {
-                        Image(systemName: "bolt.circle.fill")
-                            .font(.system(size: 24))
-                            .foregroundStyle(Color.accentColor)
+                    // Source platform (read-only, no auth needed)
+                    HStack(spacing: 16) {
+                        PlatformIcon(platform: viewModel.sourcePlatform, size: 48)
                         
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Quick Convert")
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("From")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                            
+                            Text(viewModel.sourcePlatform.displayName)
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(.primary)
-                            
-                            Text("Paste a link, skip the login")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
                         }
                         
                         Spacer()
+                        
+                        Text("Public Access")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
                     }
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     
-                    HStack(spacing: 12) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "link")
-                                .font(.system(size: 16))
-                                .foregroundStyle(.secondary)
-                            
-                            TextField("Paste playlist URL", text: $viewModel.urlInput)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 16))
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                                .submitLabel(.go)
-                                .focused($isUrlFieldFocused)
-                                .onSubmit {
-                                    if viewModel.isValidURL {
-                                        viewModel.convertFromURL()
-                                    }
-                                }
-                                .id("urlField")
-                            
-                            if !viewModel.urlInput.isEmpty {
-                                Button(action: { viewModel.urlInput = "" }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 16))
-                                        .foregroundStyle(.tertiary)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
-                        .background(Color(.tertiarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        
-                        if !viewModel.urlInput.isEmpty && viewModel.isValidURL {
-                            Button(action: viewModel.convertFromURL) {
-                                Image(systemName: "arrow.right.circle.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundStyle(Color.accentColor)
-                            }
-                            .transition(.scale.combined(with: .opacity))
-                        }
-                    }
-                    
-                    // Supported platforms hint
-                    HStack(spacing: 16) {
-                        HStack(spacing: 6) {
-                            PlatformIcon(platform: .spotify, size: 16)
-                            Text("Spotify")
-                                .font(.system(size: 12))
-                        }
-                        .foregroundStyle(.secondary)
-                        
-                        Text("•")
-                            .foregroundStyle(.tertiary)
-                        
-                        HStack(spacing: 6) {
-                            PlatformIcon(platform: .apple, size: 16)
-                            Text("Apple Music")
-                                .font(.system(size: 12))
-                        }
-                        .foregroundStyle(.secondary)
-                    }
+                    // Target platform (requires auth)
+                    PlatformCard(
+                        platform: viewModel.targetPlatform,
+                        isAuthenticated: viewModel.targetAuthenticated,
+                        label: "To",
+                        action: viewModel.authenticateTarget
+                    )
                 }
-                .padding(20)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(.separator), lineWidth: 0.5)
-                )
                 .padding(.horizontal)
-            }
-            
-            Spacer(minLength: 50)
-        }
-        .padding(.bottom, 20)
-        }
-        .onChange(of: isUrlFieldFocused) { oldValue, newValue in
-            if newValue {
-                withAnimation {
-                    proxy.scrollTo("urlField", anchor: .center)
+                
+                // Quick Link Convert (Primary flow)
+                VStack(spacing: 0) {
+                    // Quick convert card
+                    VStack(spacing: 16) {
+                        HStack {
+                            Image(systemName: "link.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(Color.accentColor)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Convert Playlist")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                
+                                Text("Paste a playlist link to convert")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        HStack(spacing: 12) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "link")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.secondary)
+                                
+                                TextField("Paste playlist URL", text: $viewModel.urlInput)
+                                    .textFieldStyle(.plain)
+                                    .font(.system(size: 16))
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                    .submitLabel(.go)
+                                    .focused($isUrlFieldFocused)
+                                    .onSubmit {
+                                        if viewModel.isValidURL {
+                                            viewModel.convertFromURL()
+                                        }
+                                    }
+                            }
+                            
+                            if viewModel.isValidURL {
+                                Button(action: viewModel.convertFromURL) {
+                                    Image(systemName: "arrow.right.circle.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(Color.accentColor)
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color(.tertiarySystemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        
+                        Text("Supports Spotify and Apple Music links")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.tertiary)
+                            .multilineTextAlignment(.center)
+                        
+                        HStack(spacing: 6) {
+                            HStack(spacing: 6) {
+                                PlatformIcon(platform: .spotify, size: 16)
+                                Text("Spotify")
+                                    .font(.system(size: 12))
+                            }
+                            .foregroundStyle(.secondary)
+                            
+                            Text("•")
+                                .foregroundStyle(.tertiary)
+                            
+                            HStack(spacing: 6) {
+                                PlatformIcon(platform: .apple, size: 16)
+                                Text("Apple Music")
+                                    .font(.system(size: 12))
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(20)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color(.separator), lineWidth: 0.5)
+                    )
+                    .padding(.horizontal)
                 }
+                
+                Spacer(minLength: 50)
             }
-        }
+            .padding(.bottom, 20)
         }
         .background(Color("BackgroundColor"))
-        .ignoresSafeArea(.keyboard)
-        .task {
-            await viewModel.checkAuthStatus()
+        .onTapGesture {
+            // Dismiss keyboard when tapping outside
+            isUrlFieldFocused = false
         }
+        // Auth check removed - now handled centrally in AuxApp
     }
 }
 

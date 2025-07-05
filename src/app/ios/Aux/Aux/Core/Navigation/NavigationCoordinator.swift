@@ -33,15 +33,15 @@ final class NavigationCoordinator: ObservableObject {
     }
     
     enum Route: Hashable {
-        case playlistSelection(direction: ConversionDirection, urlToConvert: String? = nil)
+        case urlConversion(url: String, direction: ConversionDirection)
         case conversionProgress(playlist: Playlist, direction: ConversionDirection)
         case conversionResult(result: ConversionResult)
         case playlistDetail(playlist: Playlist)
         
         static func == (lhs: Route, rhs: Route) -> Bool {
             switch (lhs, rhs) {
-            case (.playlistSelection(let lDir, let lUrl), .playlistSelection(let rDir, let rUrl)):
-                return lDir == rDir && lUrl == rUrl
+            case (.urlConversion(let lUrl, let lDir), .urlConversion(let rUrl, let rDir)):
+                return lUrl == rUrl && lDir == rDir
             case (.conversionProgress(let lPlaylist, let lDir), .conversionProgress(let rPlaylist, let rDir)):
                 return lPlaylist == rPlaylist && lDir == rDir
             case (.conversionResult(let lResult), .conversionResult(let rResult)):
@@ -55,10 +55,10 @@ final class NavigationCoordinator: ObservableObject {
         
         func hash(into hasher: inout Hasher) {
             switch self {
-            case .playlistSelection(let direction, let url):
-                hasher.combine("playlistSelection")
-                hasher.combine(direction)
+            case .urlConversion(let url, let direction):
+                hasher.combine("urlConversion")
                 hasher.combine(url)
+                hasher.combine(direction)
             case .conversionProgress(let playlist, let direction):
                 hasher.combine("conversionProgress")
                 hasher.combine(playlist)
@@ -74,8 +74,8 @@ final class NavigationCoordinator: ObservableObject {
     }
     
     // Navigation actions
-    func showPlaylistSelection(direction: ConversionDirection, urlToConvert: String? = nil) {
-        path.append(Route.playlistSelection(direction: direction, urlToConvert: urlToConvert))
+    func showURLConversion(url: String, direction: ConversionDirection) {
+        path.append(Route.urlConversion(url: url, direction: direction))
     }
     
     func showConversionProgress(playlist: Playlist, direction: ConversionDirection) {

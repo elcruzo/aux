@@ -4,9 +4,9 @@ import Foundation
 enum AppConfiguration {
     /// API base URL
     static var apiBaseURL: String {
-        // Read from Info.plist (which gets values from xcconfig)
-        if let url = Bundle.main.infoDictionary?["API_BASE_URL"] as? String {
-            return url
+        // Read host from Info.plist and construct full URL
+        if let host = Bundle.main.infoDictionary?["API_HOST"] as? String {
+            return "https://\(host)/api"
         }
         
         // Fallback to production
@@ -15,9 +15,9 @@ enum AppConfiguration {
     
     /// Web base URL (for docs, OAuth callbacks, etc)
     static var webBaseURL: String {
-        // Read from Info.plist (which gets values from xcconfig)
-        if let url = Bundle.main.infoDictionary?["WEB_BASE_URL"] as? String {
-            return url
+        // Read host from Info.plist and construct full URL
+        if let host = Bundle.main.infoDictionary?["WEB_HOST"] as? String {
+            return "https://\(host)"
         }
         
         // Fallback to production
