@@ -1,0 +1,303 @@
+# iOS CI/CD Pipeline for Aux
+name: iOS CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_15.0.app/Contents/Developer
+  XCODE_PROJECT: src/app/ios/Aux/Aux.xcodeproj
+  XCODE_SCHEME: Aux
+  BUNDLE_ID: com.elcruzo.aux
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-14
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.0'
+        
+    - name: Install dependencies
+      run: |
+        gem install bundler
+        bundle install
+        
+    - name: Cache derived data
+      uses: actions/cache@v3
+      with:
+        path: ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-derived-data-${{ hashFiles('**/*.pbxproj') }}
+        restore-keys: |
+          ${{ runner.os }}-derived-data-
+          
+    - name: Run SwiftLint
+      run: |
+        if which swiftlint >/dev/null; then
+          swiftlint --config .swiftlint.yml
+        else
+          echo "SwiftLint not installed, skipping..."
+        fi
+        
+    - name: Run tests
+      run: |
+        xcodebuild test \
+          -project $XCODE_PROJECT \
+          -scheme $XCODE_SCHEME \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -enableCodeCoverage YES \
+          -resultBundlePath TestResults.xcresult
+          
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: TestResults.xcresult
+        
+    - name: Generate code coverage report
+      run: |
+        xcrun xccov view --report --json TestResults.xcresult > coverage.json
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.json
+        flags: ios
+        name: codecov-ios
+
+  build:
+    name: Build
+    runs-on: macos-14
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '15.0'
+        
+    - name: Install dependencies
+      run: |
+        gem install bundler
+        bundle install
+        
+    - name: Cache derived data
+      uses: actions/cache@v3
+      with:
+        path: ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-derived-data-${{ hashFiles('**/*.pbxproj') }}
+        restore-keys: |
+          ${{ runner.os }}-derived-data-
+          
+    - name: Setup certificates
+      env:
+        CERTIFICATES_P12: ${{ secrets.CERTIFICATES_P12 }}
+        CERTIFICATES_PASSWORD: ${{ secrets.CERTIFICATES_PASSWORD }}
+        PROVISIONING_PROFILE: ${{ secrets.PROVISIONING_PROFILE }}
+        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      run: |
+        # Create keychain
+        security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+        security default-keychain -s build.keychain
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+        
+        # Import certificates
+        echo $CERTIFICATES_P12 | base64 --decode > certificate.p12
+        security import certificate.p12 -k build.keychain -P "$CERTIFICATES_PASSWORD" -T /usr/bin/codesign
+        
+        # Install provisioning profile
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        echo $PROVISIONING_PROFILE | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+        
+        # Set key partition list
+        security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+        
+    - name: Increment build number
+      run: |
+        BUILD_NUMBER=$(($GITHUB_RUN_NUMBER + 100))
+        xcrun agvtool new-version -all $BUILD_NUMBER
+        
+    - name: Build and archive
+      run: |
+        xcodebuild archive \
+          -project $XCODE_PROJECT \
+          -scheme $XCODE_SCHEME \
+          -configuration Release \
+          -archivePath build/Aux.xcarchive \
+          -allowProvisioningUpdates \
+          CODE_SIGN_STYLE=Manual \
+          PROVISIONING_PROFILE_SPECIFIER="Aux App Store" \
+          CODE_SIGN_IDENTITY="Apple Distribution"
+          
+    - name: Export IPA
+      run: |
+        cat > ExportOptions.plist << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+          <key>destination</key>
+          <string>export</string>
+          <key>method</key>
+          <string>app-store</string>
+          <key>uploadBitcode</key>
+          <false/>
+          <key>uploadSymbols</key>
+          <true/>
+          <key>compileBitcode</key>
+          <false/>
+          <key>thinning</key>
+          <string>&lt;none&gt;</string>
+        </dict>
+        </plist>
+        EOF
+        
+        xcodebuild -exportArchive \
+          -archivePath build/Aux.xcarchive \
+          -exportPath build/export \
+          -exportOptionsPlist ExportOptions.plist
+          
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ios-build
+        path: build/export/Aux.ipa
+
+  deploy-testflight:
+    name: Deploy to TestFlight
+    runs-on: macos-14
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: ios-build
+        path: build/
+        
+    - name: Setup App Store Connect API
+      env:
+        APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      run: |
+        mkdir -p ~/.appstoreconnect/private_keys/
+        echo "$APP_STORE_CONNECT_API_KEY" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8
+        
+    - name: Upload to TestFlight
+      env:
+        APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      run: |
+        xcrun altool --validate-app \
+          -f build/Aux.ipa \
+          -t ios \
+          --apiKey $APP_STORE_CONNECT_KEY_ID \
+          --apiIssuer $APP_STORE_CONNECT_ISSUER_ID
+          
+        xcrun altool --upload-app \
+          -f build/Aux.ipa \
+          -t ios \
+          --apiKey $APP_STORE_CONNECT_KEY_ID \
+          --apiIssuer $APP_STORE_CONNECT_ISSUER_ID
+          
+    - name: Notify Slack
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#ios-releases'
+        text: 'Aux iOS app deployed to TestFlight! 🧪'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  deploy-appstore:
+    name: Deploy to App Store
+    runs-on: macos-14
+    needs: build
+    if: github.event_name == 'release'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Download build artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: ios-build
+        path: build/
+        
+    - name: Setup App Store Connect API
+      env:
+        APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      run: |
+        mkdir -p ~/.appstoreconnect/private_keys/
+        echo "$APP_STORE_CONNECT_API_KEY" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_KEY_ID.p8
+        
+    - name: Upload to App Store
+      env:
+        APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      run: |
+        xcrun altool --upload-app \
+          -f build/Aux.ipa \
+          -t ios \
+          --apiKey $APP_STORE_CONNECT_KEY_ID \
+          --apiIssuer $APP_STORE_CONNECT_ISSUER_ID
+          
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: build/Aux.ipa
+        body: |
+          ## What's New in Aux v${{ github.event.release.tag_name }}
+          
+          🎵 Seamless playlist conversion between Spotify and Apple Music
+          
+          ### New Features
+          - Widget support for quick conversions
+          - Siri Shortcuts integration
+          - Analytics dashboard
+          - Enhanced sharing capabilities
+          
+          ### Improvements
+          - Better playlist matching algorithm
+          - Improved error handling
+          - UI/UX enhancements
+          - Performance optimizations
+          
+          Download from the [App Store](https://apps.apple.com/app/aux-playlist-converter/id6451234567)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Notify Slack
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#ios-releases'
+        text: 'Aux iOS app deployed to App Store! 🚀'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

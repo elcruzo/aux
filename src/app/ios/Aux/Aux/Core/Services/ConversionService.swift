@@ -11,14 +11,17 @@ final class ConversionService: ObservableObject {
     
     private let apiClient: APIClient
     private let playlistService: PlaylistService
+    private let analyticsService: AnalyticsService
     
-    init(apiClient: APIClient, playlistService: PlaylistService) {
+    init(apiClient: APIClient, playlistService: PlaylistService, analyticsService: AnalyticsService = .shared) {
         self.apiClient = apiClient
         self.playlistService = playlistService
+        self.analyticsService = analyticsService
     }
     
     /// Convert a playlist from one platform to another with detailed progress
     func convertPlaylist(_ playlist: Playlist, direction: ConversionDirection) async throws -> ConversionResult {
+        let startTime = Date()
         isConverting = true
         error = nil
         
@@ -88,6 +91,23 @@ final class ConversionService: ObservableObject {
             lastResult = result
             isConverting = false
             
+            // Track analytics
+            let duration = Date().timeIntervalSince(startTime)
+            analyticsService.trackConversion(
+                from: direction.source.rawValue,
+                to: direction.target.rawValue,
+                playlistSize: playlist.trackCount,
+                duration: duration
+            )
+            
+            // Donate Siri shortcut
+            if #available(iOS 14.0, *) {
+                donateConvertPlaylistShortcut(
+                    playlistURL: playlist.externalUrl?.absoluteString ?? "",
+                    playlistName: playlist.name
+                )
+            }
+            
             // Save to history
             await ConversionHistoryService.shared.saveConversion(
                 playlist: playlist,
@@ -99,6 +119,12 @@ final class ConversionService: ObservableObject {
         } catch {
             self.error = error
             isConverting = false
+            
+            // Track conversion error
+            analyticsService.trackConversionError(
+                error: error.localizedDescription,
+                context: "convertPlaylist - \(direction.source) to \(direction.target)"
+            )
             
             progress = ConversionProgress(
                 stage: .complete,

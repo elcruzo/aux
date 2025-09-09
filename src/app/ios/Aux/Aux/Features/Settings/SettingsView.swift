@@ -132,6 +132,10 @@ struct SettingsView: View {
                 
                 // Developer Section
                 Section {
+                    NavigationLink(destination: AdvancedSettingsView()) {
+                        Label("Advanced Settings", systemImage: "gearshape.2")
+                    }
+                    
                     Link(destination: URL(string: AppConfiguration.apiDocsURL)!) {
                         HStack {
                             Label("API Documentation", systemImage: "doc.text")

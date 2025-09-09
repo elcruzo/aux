@@ -1,0 +1,290 @@
+# Fastfile for Aux iOS App
+# Automated build, test, and deployment pipeline
+
+default_platform(:ios)
+
+# Constants
+SCHEME = "Aux"
+WORKSPACE = "./src/app/ios/Aux/Aux.xcodeproj/project.xcworkspace"
+PROJECT = "./src/app/ios/Aux/Aux.xcodeproj"
+BUNDLE_ID = "com.elcruzo.aux"
+
+platform :ios do
+  
+  # Setup lane - prepare environment
+  desc "Setup development environment"
+  lane :setup do
+    ensure_xcode_version(version: "15.0")
+    cocoapods(podfile: "./src/app/ios/Aux/Podfile") if File.exist?("./src/app/ios/Aux/Podfile")
+    
+    # Install certificates and provisioning profiles
+    match(type: "development", readonly: true)
+    match(type: "appstore", readonly: true)
+    
+    UI.success "✅ Development environment setup complete!"
+  end
+  
+  # Test lane
+  desc "Run all tests"
+  lane :test do
+    run_tests(
+      project: PROJECT,
+      scheme: SCHEME,
+      devices: ["iPhone 15"],
+      clean: true,
+      code_coverage: true
+    )
+    
+    # Generate test report
+    trainer(output_directory: "./fastlane/test_output")
+    
+    UI.success "✅ All tests passed!"
+  end
+  
+  # Build lane - build and archive
+  desc "Build and archive the app"
+  lane :build do
+    # Increment build number
+    increment_build_number(
+      xcodeproj: PROJECT
+    )
+    
+    # Clean and build
+    clear_derived_data
+    
+    gym(
+      project: PROJECT,
+      scheme: SCHEME,
+      configuration: "Release",
+      clean: true,
+      output_directory: "./fastlane/builds",
+      output_name: "Aux.ipa",
+      export_method: "app-store",
+      export_options: {
+        uploadBitcode: false,
+        uploadSymbols: true,
+        compileBitcode: false,
+        thinning: "<none>"
+      }
+    )
+    
+    UI.success "✅ Build completed successfully!"
+  end
+  
+  # Beta lane - deploy to TestFlight
+  desc "Deploy to TestFlight"
+  lane :beta do
+    # Run tests first
+    test
+    
+    # Build the app
+    build
+    
+    # Upload to TestFlight
+    pilot(
+      api_key_path: "./fastlane/AuthKey.json",
+      skip_waiting_for_build_processing: false,
+      changelog: "Bug fixes and performance improvements",
+      groups: ["Internal Testers"],
+      notify_external_testers: false
+    )
+    
+    # Notify team
+    slack(
+      message: "🧪 New Aux beta build uploaded to TestFlight!",
+      channel: "#ios-releases",
+      success: true
+    ) if ENV["SLACK_URL"]
+    
+    UI.success "🧪 Beta deployment completed!"
+  end
+  
+  # Release lane - deploy to App Store
+  desc "Deploy to App Store"
+  lane :release do
+    # Ensure we're on main branch
+    ensure_git_branch(branch: "main")
+    ensure_git_status_clean
+    
+    # Run tests
+    test
+    
+    # Build the app
+    build
+    
+    # Upload to App Store
+    deliver(
+      api_key_path: "./fastlane/AuthKey.json",
+      submit_for_review: false,
+      automatic_release: false,
+      force: true,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+      skip_screenshots: false,
+      skip_metadata: false,
+      precheck_include_in_app_purchases: false
+    )
+    
+    # Create git tag
+    current_version = get_version_number(xcodeproj: PROJECT)
+    current_build = get_build_number(xcodeproj: PROJECT)
+    add_git_tag(tag: "v#{current_version}-#{current_build}")
+    push_git_tags
+    
+    # Notify team
+    slack(
+      message: "🚀 Aux v#{current_version} (#{current_build}) uploaded to App Store!",
+      channel: "#ios-releases",
+      success: true
+    ) if ENV["SLACK_URL"]
+    
+    UI.success "🚀 App Store deployment completed!"
+  end
+  
+  # Screenshots lane
+  desc "Generate screenshots"
+  lane :screenshots do
+    capture_screenshots(
+      scheme: SCHEME,
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: true,
+      override_status_bar: true,
+      devices: [
+        "iPhone 15 Pro Max",
+        "iPhone 15",
+        "iPhone SE (3rd generation)",
+        "iPad Pro (12.9-inch) (6th generation)"
+      ]
+    )
+    
+    # Optimize screenshots
+    optimize_screenshots
+    
+    UI.success "📱 Screenshots generated!"
+  end
+  
+  # Metadata lane
+  desc "Update App Store metadata"
+  lane :metadata do
+    deliver(
+      api_key_path: "./fastlane/AuthKey.json",
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      force: true,
+      metadata_path: "./fastlane/metadata"
+    )
+    
+    UI.success "📝 Metadata updated!"
+  end
+  
+  # Version bump lanes
+  desc "Bump patch version"
+  lane :bump_patch do
+    increment_version_number(
+      xcodeproj: PROJECT,
+      bump_type: "patch"
+    )
+    
+    commit_version_bump(
+      xcodeproj: PROJECT,
+      message: "Bump version to #{get_version_number(xcodeproj: PROJECT)}"
+    )
+    
+    UI.success "📈 Version bumped!"
+  end
+  
+  desc "Bump minor version"
+  lane :bump_minor do
+    increment_version_number(
+      xcodeproj: PROJECT,
+      bump_type: "minor"
+    )
+    
+    commit_version_bump(
+      xcodeproj: PROJECT,
+      message: "Bump version to #{get_version_number(xcodeproj: PROJECT)}"
+    )
+    
+    UI.success "📈 Version bumped!"
+  end
+  
+  desc "Bump major version"
+  lane :bump_major do
+    increment_version_number(
+      xcodeproj: PROJECT,
+      bump_type: "major"
+    )
+    
+    commit_version_bump(
+      xcodeproj: PROJECT,
+      message: "Bump version to #{get_version_number(xcodeproj: PROJECT)}"
+    )
+    
+    UI.success "📈 Version bumped!"
+  end
+  
+  # Code signing lane
+  desc "Update certificates and provisioning profiles"
+  lane :certificates do
+    match(type: "development", force: true)
+    match(type: "appstore", force: true)
+    
+    UI.success "🔐 Certificates updated!"
+  end
+  
+  # Linting lane
+  desc "Run SwiftLint"
+  lane :lint do
+    swiftlint(
+      mode: :lint,
+      executable: "Pods/SwiftLint/swiftlint",
+      config_file: ".swiftlint.yml",
+      strict: true
+    )
+    
+    UI.success "✨ Linting completed!"
+  end
+  
+  # Full CI lane
+  desc "Full CI pipeline"
+  lane :ci do
+    setup
+    lint
+    test
+    build
+    
+    UI.success "🎉 CI pipeline completed!"
+  end
+  
+  # Development helpers
+  desc "Reset development environment"
+  lane :reset do
+    clear_derived_data
+    reset_git_repo(force: true)
+    
+    UI.success "🔄 Environment reset!"
+  end
+  
+  # Custom actions
+  private_lane :optimize_screenshots do
+    UI.message "Optimizing screenshots..."
+    # Custom screenshot optimization logic here
+  end
+  
+  # Error handling
+  error do |lane, exception|
+    slack(
+      message: "❌ Lane '#{lane}' failed with error: #{exception.message}",
+      channel: "#ios-releases",
+      success: false
+    ) if ENV["SLACK_URL"]
+  end
+end
+
+# Post actions
+after_all do |lane|
+  notification(
+    subtitle: "Fastlane",
+    message: "Lane '#{lane}' completed successfully! 🎉"
+  )
+end
