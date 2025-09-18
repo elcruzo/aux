@@ -11,7 +11,9 @@ import Foundation
 
 // MARK: - Convert Playlist Intent
 @available(iOS 14.0, *)
-class ConvertPlaylistIntentHandler: NSObject, ConvertPlaylistIntentHandling {
+// TODO: Re-enable when Intent definitions are created
+// class ConvertPlaylistIntentHandler: NSObject, ConvertPlaylistIntentHandling {
+class ConvertPlaylistIntentHandler: NSObject {
     
     func handle(intent: ConvertPlaylistIntent, completion: @escaping (ConvertPlaylistIntentResponse) -> Void) {
         guard let playlistURL = intent.playlistURL,
@@ -56,7 +58,9 @@ class ConvertPlaylistIntentHandler: NSObject, ConvertPlaylistIntentHandling {
 
 // MARK: - Get Recent Conversions Intent
 @available(iOS 14.0, *)
-class GetRecentConversionsIntentHandler: NSObject, GetRecentConversionsIntentHandling {
+// TODO: Re-enable when Intent definitions are created
+// class GetRecentConversionsIntentHandler: NSObject, GetRecentConversionsIntentHandling {
+class GetRecentConversionsIntentHandler: NSObject {
     
     func handle(intent: GetRecentConversionsIntent, completion: @escaping (GetRecentConversionsIntentResponse) -> Void) {
         Task {

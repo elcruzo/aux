@@ -31,20 +31,20 @@ struct ConversionResultView: View {
                 
                 // Statistics
                 VStack(spacing: 20) {
-                    StatRow(
+                    ConversionStatRow(
                         title: "Total Tracks",
                         value: "\(result.totalTracks)",
                         color: .primary
                     )
                     
-                    StatRow(
+                    ConversionStatRow(
                         title: "Successful Matches",
                         value: "\(result.successfulMatches)",
                         color: Color("SuccessColor")
                     )
                     
                     if result.failedMatches > 0 {
-                        StatRow(
+                        ConversionStatRow(
                             title: "Failed Matches",
                             value: "\(result.failedMatches)",
                             color: Color("ErrorColor")
@@ -119,7 +119,7 @@ struct ConversionResultView: View {
     }
 }
 
-struct StatRow: View {
+struct ConversionStatRow: View {
     let title: String
     let value: String
     let color: Color

@@ -31,12 +31,12 @@ struct ConversionWidgetProvider: TimelineProvider {
         // Fetch from conversion history service
         do {
             let historyService = ConversionHistoryService()
-            let history = await historyService.getRecentConversions(limit: 1)
+            let history = await historyService.getHistory(limit: 1)
             return history.first.map { conversion in
                 RecentConversion(
                     playlistName: conversion.sourcePlaylistName,
-                    sourcePlatform: conversion.sourcePlatform,
-                    destinationPlatform: conversion.destinationPlatform,
+                    sourcePlatform: Track.Platform(rawValue: conversion.sourcePlatform) ?? .spotify,
+                    destinationPlatform: Track.Platform(rawValue: conversion.destinationPlatform) ?? .apple,
                     convertedAt: conversion.convertedAt
                 )
             }
@@ -53,8 +53,8 @@ struct ConversionEntry: TimelineEntry {
 
 struct RecentConversion {
     let playlistName: String
-    let sourcePlatform: String
-    let destinationPlatform: String
+    let sourcePlatform: Track.Platform
+    let destinationPlatform: Track.Platform
     let convertedAt: Date
 }
 
@@ -119,7 +119,6 @@ struct ConversionWidgetEntryView: View {
     }
 }
 
-@main
 struct ConversionWidget: Widget {
     let kind: String = "ConversionWidget"
     

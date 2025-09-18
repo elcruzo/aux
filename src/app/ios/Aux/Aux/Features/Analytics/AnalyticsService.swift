@@ -14,7 +14,7 @@ protocol AnalyticsServiceProtocol {
     func trackAppLaunch()
     func trackAuthenticationEvent(platform: String, success: Bool)
     func getConversionStats() async -> ConversionStats
-    func getPopularConversions() async -> [ConversionDirection]
+    func getPopularConversions() async -> [ConversionFlowStats]
 }
 
 struct ConversionStats {
@@ -26,7 +26,7 @@ struct ConversionStats {
     let weeklyGrowth: Double
 }
 
-struct ConversionDirection {
+struct ConversionFlowStats {
     let fromPlatform: String
     let toPlatform: String
     let count: Int
@@ -117,7 +117,7 @@ class AnalyticsService: AnalyticsServiceProtocol {
         }
     }
     
-    func getPopularConversions() async -> [ConversionDirection] {
+    func getPopularConversions() async -> [ConversionFlowStats] {
         return await withCheckedContinuation { continuation in
             queue.async {
                 let directions = self.calculatePopularConversions()
@@ -263,7 +263,7 @@ class AnalyticsService: AnalyticsServiceProtocol {
         
         return directionCounts.map { key, count in
             let components = key.components(separatedBy: "|")
-            return ConversionDirection(
+            return ConversionFlowStats(
                 fromPlatform: components[0],
                 toPlatform: components[1],
                 count: count,
